@@ -1,0 +1,11 @@
+# compile stuff and create dist directory
+npm run build 
+
+# install dependencies
+npm install
+
+# link into prod homebridge
+npm link
+
+
+Installed updated thermostat.js into /usr/lib/node_modules/homebridge-infinitive/dist

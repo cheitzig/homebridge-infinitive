@@ -35,7 +35,8 @@ export class Thermostat {
 
     this.service = new this.platform.api.hap.Service.Thermostat(this.name);
 
-    this.service.setCharacteristic(Name, `${this.platform.config.name} Thermostat`);
+    this.service.setCharacteristic(Name, `${this.platform.config.name}`);
+    // this.service.setCharacteristic(Name, `${this.platform.config.name} Thermostat`);
 
     this.service.getCharacteristic(CurrentHeatingCoolingState)
       .onGet(this.getCurrentHeatingCoolingState.bind(this));
@@ -148,13 +149,15 @@ export class Thermostat {
     } = this.platform.api.hap.Characteristic;
     const oldState = await this.infinitive.fetchThermostatState();
     const baseState = {
-      fanMode: 'auto',
-      hold: true,
+      // cjh change 2/21/2022 5pm
+      // fanMode: 'auto',
+      // hold: true,
     };
 
     switch (state) {
       case TargetHeatingCoolingState.OFF:
-        this.infinitive.setThermostatState({ mode: 'off', ...baseState });
+        // cjh change 3/2/2022 1pm
+        // this.infinitive.setThermostatState({ mode: 'off', ...baseState });
         break;
       case TargetHeatingCoolingState.HEAT:
         this.infinitive.setThermostatState({ mode: 'heat', ...baseState });
@@ -229,8 +232,9 @@ export class Thermostat {
     const { mode } = state;
     const tempC = Qty(temperature as number, 'tempC');
     const baseState = {
-      fanMode: 'auto',
-      hold: true,
+      // cjh change 2/21/2022 5pm
+      // fanMode: 'auto',
+      // hold: true,
     };
 
     switch (mode) {
