@@ -26,7 +26,7 @@ export class InfinitivePlatform implements StaticPlatformPlugin {
   }
 
   accessories(callback: (foundAccessories: AccessoryPlugin[]) => void): void {
-    const thermostat = new Thermostat(this, this.infinitive, `${this.config.name} Thermostat`);
+    const thermostat = new Thermostat(this, this.infinitive, this.config.name);
     callback(this.config.includeOutdoorSensors ? [
       thermostat,
       new OutdoorTemperature(this, this.infinitive, `${this.config.name} Outdoor Temperature`),
