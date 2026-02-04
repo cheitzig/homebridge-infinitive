@@ -1,8 +1,7 @@
 import { Service, CharacteristicValue } from 'homebridge';
-import Qty from 'js-quantities';
 
 import { InfinitivePlatform } from './platform';
-import { Infinitive } from './infinitive';
+import { Infinitive, fahrenheitToCelsius } from './infinitive';
 
 export class OutdoorTemperature {
   private informationService: Service;
@@ -40,8 +39,7 @@ export class OutdoorTemperature {
 
   async getCurrentTemperature(): Promise<CharacteristicValue> {
     const state = await this.infinitive.fetchThermostatState();
-    const temperature = Qty(state.outdoorTemp, 'tempF');
 
-    return temperature.to('tempC').scalar;
+    return fahrenheitToCelsius(state.outdoorTemp);
   }
 }

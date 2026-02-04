@@ -1,5 +1,14 @@
 import { fetchBuilder, MemoryCache } from 'node-fetch-cache';
 import ow, { Infer } from 'ow';
+import Qty from 'js-quantities';
+
+export function fahrenheitToCelsius(tempF: number): number {
+  return Qty(tempF, 'tempF').to('tempC').scalar;
+}
+
+export function celsiusToFahrenheit(tempC: number): number {
+  return Qty(tempC, 'tempC').to('tempF').scalar;
+}
 
 const checkInfinitiveState = ow.object.partialShape({
   currentTemp: ow.number,

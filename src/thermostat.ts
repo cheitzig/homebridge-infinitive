@@ -1,8 +1,7 @@
 import { Service, CharacteristicValue, Logger } from 'homebridge';
-import Qty from 'js-quantities';
 
 import { InfinitivePlatform } from './platform';
-import { Infinitive } from './infinitive';
+import { Infinitive, fahrenheitToCelsius, celsiusToFahrenheit } from './infinitive';
 
 export class Thermostat {
   private readonly log: Logger;
@@ -150,31 +149,42 @@ export class Thermostat {
     const oldState = await this.infinitive.fetchThermostatState();
     const baseState = {
       // cjh change 2/21/2022 5pm
+      // The original author forced fanMode to 'auto' and hold to true here as the baseState
+      // I don't want fan mode to be forced to auto or hold to be "on" in general like the original author did
+      // I don't actually think I need a baseState at all, but leaving it here for possible future use
       // fanMode: 'auto',
       // hold: true,
     };
 
     switch (state) {
       case TargetHeatingCoolingState.OFF:
-        // cjh change 3/2/2022 1pm
+        // cjh change 3/2/2022 1pm (commented out turning it off)
         // this.infinitive.setThermostatState({ mode: 'off', ...baseState });
+        // I don't ever want HomeKit to completely turn off the thermostat, as that risks freezing pipes in winter.
+        // Instead, set it to auto with wide setpoint range
+        this.infinitive.setThermostatState({
+          mode: 'auto',
+          heatSetpoint: 55,
+          coolSetpoint: 85,
+          ...baseState,
+        });
         break;
       case TargetHeatingCoolingState.HEAT:
-        this.infinitive.setThermostatState({ mode: 'heat', ...baseState });
+        await this.infinitive.setThermostatState({ mode: 'heat', ...baseState });
         this.service.updateCharacteristic(
           TargetTemperature,
-          Qty(oldState.heatSetpoint, 'tempF').to('tempC').scalar,
+          fahrenheitToCelsius(oldState.heatSetpoint),
         );
         break;
       case TargetHeatingCoolingState.COOL:
-        this.infinitive.setThermostatState({ mode: 'cool', ...baseState });
+        await this.infinitive.setThermostatState({ mode: 'cool', ...baseState });
         this.service.updateCharacteristic(
           TargetTemperature,
-          Qty(oldState.coolSetpoint, 'tempF').to('tempC').scalar,
+          fahrenheitToCelsius(oldState.coolSetpoint),
         );
         break;
       case TargetHeatingCoolingState.AUTO:
-        this.infinitive.setThermostatState({ mode: 'auto', ...baseState });
+        await this.infinitive.setThermostatState({ mode: 'auto', ...baseState });
         break;
       default:
         this.log.error(`Invalid HeatingCoolingState ${state}`);
@@ -191,9 +201,8 @@ export class Thermostat {
 
   async getCurrentTemperature(): Promise<CharacteristicValue> {
     const state = await this.infinitive.fetchThermostatState();
-    const temperature = Qty(state.currentTemp, 'tempF');
 
-    return temperature.to('tempC').scalar;
+    return fahrenheitToCelsius(state.currentTemp);
   }
 
   async getTargetTemperature(): Promise<CharacteristicValue> {
@@ -204,18 +213,15 @@ export class Thermostat {
       case 'off':
         return 0;
       case 'auto':
-        return Qty(
+        return fahrenheitToCelsius(
           currentTemp < heatSetpoint ? heatSetpoint : coolSetpoint,
-          'tempF',
-        ).to('tempC').scalar;
+        );
       case 'heat':
-        return Qty(heatSetpoint, 'tempF').to('tempC').scalar;
-      case 'electic':
-        return Qty(heatSetpoint, 'tempF').to('tempC').scalar;
+      case 'electric':
       case 'heatpump':
-        return Qty(heatSetpoint, 'tempF').to('tempC').scalar;
+        return fahrenheitToCelsius(heatSetpoint);
       case 'cool':
-        return Qty(coolSetpoint, 'tempF').to('tempC').scalar;
+        return fahrenheitToCelsius(coolSetpoint);
       default:
         this.log.error(`Invalid thermostat mode ${mode}`);
         throw new this.platform.api.hap.HapStatusError(
@@ -230,29 +236,31 @@ export class Thermostat {
     } = this.platform.api.hap.Characteristic;
     const state = await this.infinitive.fetchThermostatState();
     const { mode } = state;
-    const tempC = Qty(temperature as number, 'tempC');
     const baseState = {
       // cjh change 2/21/2022 5pm
+      // The original author forced fanMode to 'auto' and hold to true here as the baseState
+      // I don't want fan mode to be forced to auto or hold to be "on" in general like the original author did
+      // I don't actually think I need a baseState at all, but leaving it here for possible future use
       // fanMode: 'auto',
       // hold: true,
     };
 
     switch (mode) {
       case 'heat':
-        this.infinitive.setThermostatState({
-          heatSetpoint: Math.round(tempC.to('tempF').scalar),
+        await this.infinitive.setThermostatState({
+          heatSetpoint: Math.round(celsiusToFahrenheit(temperature as number)),
           ...baseState,
         });
         break;
       case 'cool':
-        this.infinitive.setThermostatState({
-          coolSetpoint: Math.round(tempC.to('tempF').scalar),
+        await this.infinitive.setThermostatState({
+          coolSetpoint: Math.round(celsiusToFahrenheit(temperature as number)),
           ...baseState,
         });
         break;
       default:
         // 'auto' uses coolSetpoint and heatSetpoint sequentially
-        this.infinitive.setThermostatState({
+        await this.infinitive.setThermostatState({
           ...baseState,
         });
     }
@@ -281,19 +289,17 @@ export class Thermostat {
 
   async getCoolingThresholdTemperature(): Promise<CharacteristicValue> {
     const state = await this.infinitive.fetchThermostatState();
-    const tempC = Qty(state.coolSetpoint, 'tempF');
 
-    return tempC.to('tempC').scalar;
+    return fahrenheitToCelsius(state.coolSetpoint);
   }
 
   async setCoolingThresholdTemperature(temperature: CharacteristicValue) {
     const {
       CurrentHeatingCoolingState,
     } = this.platform.api.hap.Characteristic;
-    const tempC = Qty(temperature as number, 'tempC');
 
     await this.infinitive.setThermostatState({
-      coolSetpoint: Math.round(tempC.to('tempF').scalar),
+      coolSetpoint: Math.round(celsiusToFahrenheit(temperature as number)),
     });
 
     this.service.updateCharacteristic(
@@ -304,19 +310,17 @@ export class Thermostat {
 
   async getHeatingThresholdTemperature(): Promise<CharacteristicValue> {
     const state = await this.infinitive.fetchThermostatState();
-    const tempC = Qty(state.heatSetpoint, 'tempF');
 
-    return tempC.to('tempC').scalar;
+    return fahrenheitToCelsius(state.heatSetpoint);
   }
 
   async setHeatingThresholdTemperature(temperature: CharacteristicValue) {
     const {
       CurrentHeatingCoolingState,
     } = this.platform.api.hap.Characteristic;
-    const tempC = Qty(temperature as number, 'tempC');
 
     await this.infinitive.setThermostatState({
-      heatSetpoint: Math.round(tempC.to('tempF').scalar),
+      heatSetpoint: Math.round(celsiusToFahrenheit(temperature as number)),
     });
 
     this.service.updateCharacteristic(
