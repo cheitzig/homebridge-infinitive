@@ -3,7 +3,6 @@ import { API, AccessoryPlugin, StaticPlatformPlugin, Logger, PlatformConfig } fr
 import { Infinitive } from './infinitive';
 import { Thermostat } from './thermostat';
 import { OutdoorTemperature } from './outdoor_temperature';
-import { OutdoorHumidity } from './outdoor_humidity';
 
 /**
  * HomebridgePlatform
@@ -31,7 +30,6 @@ export class InfinitivePlatform implements StaticPlatformPlugin {
     callback(this.config.includeOutdoorSensors ? [
       thermostat,
       new OutdoorTemperature(this, this.infinitive, `${this.config.name} Outdoor Temperature`),
-      new OutdoorHumidity(this, this.infinitive, `${this.config.name} Outdoor Humidity`),
     ] :
       [ thermostat ]);
   }
