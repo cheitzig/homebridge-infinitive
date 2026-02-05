@@ -1,4 +1,4 @@
-import { fetchBuilder, MemoryCache } from 'node-fetch-cache';
+import NodeFetchCache, { MemoryCache } from 'node-fetch-cache';
 import ow, { Infer } from 'ow';
 import Qty from 'js-quantities';
 
@@ -37,9 +37,9 @@ export class Infinitive {
   }
 
   private purgeCache() {
-    this.fetch = fetchBuilder.withCache(new MemoryCache({
-      ttl: 250,
-    }));
+    this.fetch = NodeFetchCache.create({
+      cache: new MemoryCache({ ttl: 250 }),
+    });
   }
 
   async fetchThermostatState(): Promise<InfinitiveState> {
