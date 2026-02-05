@@ -28,7 +28,7 @@
         "required": false
       },
       "includeOutdoorSensors": {
-        "title": "Include Outdoor Temperature & Humidity Sensors",
+        "title": "Include Outdoor Temperature Sensor",
         "type": "boolean",
         "required": true,
         "default": true
