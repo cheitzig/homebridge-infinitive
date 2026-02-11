@@ -8,7 +8,7 @@
       "email": "charlie@heitzig.org"
     }
   ],
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Homebridge plugin for the Infinitive HVAC control server (custom fork by Charlie Heitzig, originally by @unjordy)",
   "license": "Apache-2.0",
   "repository": {

@@ -51,7 +51,21 @@ export class Infinitive {
     const res = await this.fetch(`${this.url}/api/zone/1/config`, {
       headers,
     });
-    const state = await res.json();
+    let text;
+    try {
+      text = await res.text();
+    } catch (e) {
+      throw new Error('Failed to read response from Infinitive server: ' + e);
+    }
+    if (!text) {
+      throw new Error('Empty response from Infinitive server');
+    }
+    let state;
+    try {
+      state = JSON.parse(text);
+    } catch (e) {
+      throw new Error('Invalid JSON from Infinitive server: ' + text);
+    }
 
     ow(state, checkInfinitiveState);
 
